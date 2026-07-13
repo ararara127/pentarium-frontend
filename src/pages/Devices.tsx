@@ -6,6 +6,7 @@ import { DeviceTable } from '../components/DeviceTable'
 import { Modal } from '../components/Modal'
 import { PageError, PageLoading } from '../components/PageState'
 import { api, ApiError } from '../lib/api'
+import { copyTextToClipboard } from '../lib/clipboard'
 import type { Device } from '../lib/types'
 
 type ModalMode = 'create' | 'claim' | null
@@ -69,11 +70,28 @@ export function Devices() {
 
   async function copyValue(value: string, field: 'claimCode' | 'token') {
     try {
-      await navigator.clipboard.writeText(value)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = value
+        textarea.style.position = "fixed"
+        textarea.style.left = "-9999px"
+  
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+  
+        document.execCommand("copy")
+  
+        document.body.removeChild(textarea)
+      }
+  
       setCopiedField(field)
       window.setTimeout(() => setCopiedField(null), 1500)
-    } catch {
-      // ignore clipboard errors
+    } catch (err) {
+      console.error(err)
+      alert("Copy gagal")
     }
   }
 
@@ -277,7 +295,14 @@ function SecretField({
         </code>
         <button
           type="button"
-          onClick={onCopy}
+          onClick={() => {
+            console.log('[copy] SecretField button clicked', {
+              label,
+              disabled: !value,
+              hasValue: Boolean(value),
+            })
+            onCopy()
+          }}
           disabled={!value}
           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-muted)] transition hover:bg-[var(--brand-light)] hover:text-[var(--brand)] disabled:opacity-50"
           aria-label={`Salin ${label}`}
