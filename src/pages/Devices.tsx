@@ -69,30 +69,15 @@ export function Devices() {
   }
 
   async function copyValue(value: string, field: 'claimCode' | 'token') {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value)
-      } else {
-        const textarea = document.createElement("textarea")
-        textarea.value = value
-        textarea.style.position = "fixed"
-        textarea.style.left = "-9999px"
+    const ok = await copyTextToClipboard(value)
   
-        document.body.appendChild(textarea)
-        textarea.focus()
-        textarea.select()
-  
-        document.execCommand("copy")
-  
-        document.body.removeChild(textarea)
-      }
-  
-      setCopiedField(field)
-      window.setTimeout(() => setCopiedField(null), 1500)
-    } catch (err) {
-      console.error(err)
-      alert("Copy gagal")
+    if (!ok) {
+      alert('Copy gagal')
+      return
     }
+  
+    setCopiedField(field)
+    window.setTimeout(() => setCopiedField(null), 1500)
   }
 
   if (isLoading) {
