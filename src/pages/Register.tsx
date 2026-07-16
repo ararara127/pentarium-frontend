@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AlertCircle } from 'lucide-react'
+import { PasswordInput } from '../components/PasswordInput'
 import { api, ApiError } from '../lib/api'
 import { isAuthenticated, setToken } from '../lib/auth'
 
@@ -99,15 +100,13 @@ export function Register() {
             >
               Password
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-light)]"
               placeholder="••••••••"
             />
           </div>
