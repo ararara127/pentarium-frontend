@@ -6,9 +6,16 @@ interface ModalProps {
   title: string
   onClose: () => void
   children: ReactNode
+  maxWidthClass?: string
 }
 
-export function Modal({ open, title, onClose, children }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  maxWidthClass = 'max-w-md',
+}: ModalProps) {
   useEffect(() => {
     if (!open) return
 
@@ -34,7 +41,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative z-10 w-full max-w-md rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]"
+        className={`relative z-10 w-full ${maxWidthClass} rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)]`}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 id="modal-title" className="text-lg font-bold text-[var(--text)]">

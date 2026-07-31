@@ -26,9 +26,14 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-  tenantId: string
-  userId: string
-  email: string
+  message?: string
+  tenantId?: string
+  userId?: string
+  email?: string
+}
+
+export interface MessageResponse {
+  message: string
 }
 
 export interface DashboardResponse {
@@ -38,16 +43,68 @@ export interface DashboardResponse {
   devices: Device[]
 }
 
-export interface TelemetryData {
-  suhu: number
-  kelembapan: number
-}
+export type TelemetryData = Record<string, number>
 
 export interface TelemetryPoint {
   id: string
-  deviceId: string
   ts: string
   data: TelemetryData
+}
+
+export type WidgetType = 'chart' | 'gauge' | 'stat' | 'text' | 'button'
+export type WidgetWidth = 'half' | 'full'
+
+export interface WidgetConfig {
+  min?: number
+  max?: number
+  unit?: string
+  limit?: number
+  content?: string
+  command?: string
+}
+
+export interface SendCommandRequest {
+  command: string
+  value?: string | number | null
+}
+
+export interface SendCommandResponse {
+  message: string
+}
+
+export interface Widget {
+  id: string
+  type: WidgetType
+  title: string
+  deviceId: string | null
+  metric: string | null
+  config: WidgetConfig
+  width: WidgetWidth
+  position: number
+  device?: {
+    name: string
+  } | null
+}
+
+export interface CreateWidgetRequest {
+  type: WidgetType
+  title: string
+  deviceId?: string | null
+  metric?: string | null
+  config?: WidgetConfig
+  width: WidgetWidth
+}
+
+export interface UpdateWidgetRequest {
+  title?: string
+  metric?: string | null
+  config?: WidgetConfig
+  width?: WidgetWidth
+  deviceId?: string | null
+}
+
+export interface ReorderWidgetsRequest {
+  ids: string[]
 }
 
 export interface CreateDeviceRequest {
