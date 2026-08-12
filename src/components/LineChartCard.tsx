@@ -8,14 +8,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { TelemetryPoint } from '../lib/types'
-import { formatChartTime } from '../lib/format'
+import type { TelemetryPoint, TelemetryRange } from '../lib/types'
+import { formatChartTime, formatChartTimeForRange } from '../lib/format'
 
 interface LineChartCardProps {
   data: TelemetryPoint[]
   title?: string
   subtitle?: string
   emptyMessage?: string
+  range?: TelemetryRange
 }
 
 export function LineChartCard({
@@ -23,9 +24,12 @@ export function LineChartCard({
   title = 'Telemetri suhu & kelembapan',
   subtitle,
   emptyMessage = 'Belum ada data telemetri.',
+  range,
 }: LineChartCardProps) {
   const chartData = data.map((point) => ({
-    time: formatChartTime(point.ts),
+    time: range
+      ? formatChartTimeForRange(point.ts, range)
+      : formatChartTime(point.ts),
     suhu: point.data.suhu,
     kelembapan: point.data.kelembapan,
     ts: point.ts,

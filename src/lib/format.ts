@@ -1,3 +1,5 @@
+import type { TelemetryRange } from './types'
+
 export function formatRelativeTime(iso: string | null | undefined): string {
   if (!iso) return 'Belum pernah'
 
@@ -41,4 +43,53 @@ export function formatChartTime(iso: string): string {
     minute: '2-digit',
     second: '2-digit',
   })
+}
+
+export const TELEMETRY_RANGE_OPTIONS: Array<{
+  value: TelemetryRange
+  label: string
+  shortLabel: string
+}> = [
+  { value: '15m', label: '15 menit', shortLabel: '15 menit terakhir' },
+  { value: '1h', label: '1 jam', shortLabel: '1 jam terakhir' },
+  { value: '24h', label: '24 jam', shortLabel: '24 jam terakhir' },
+  { value: '7d', label: '7 hari', shortLabel: '7 hari terakhir' },
+]
+
+export function formatChartTimeForRange(iso: string, range: TelemetryRange): string {
+  const date = new Date(iso)
+
+  if (range === '7d') {
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const time = date.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    return `${day}/${month} ${time}`
+  }
+
+  return date.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function telemetryRefetchInterval(range: TelemetryRange): number {
+  switch (range) {
+    case '15m':
+    case '1h':
+      return 10_000
+    case '24h':
+      return 60_000
+    case '7d':
+      return 5 * 60_000
+  }
+}
+
+export function telemetryRangeLabel(range: TelemetryRange): string {
+  return (
+    TELEMETRY_RANGE_OPTIONS.find((option) => option.value === range)?.shortLabel ??
+    range
+  )
 }

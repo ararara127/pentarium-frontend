@@ -1,33 +1,80 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Droplets, Thermometer } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowLeft, Download, Droplets, Thermometer } from 'lucide-react'
 import { useTelemetry } from '../hooks/useTelemetry'
 import { useDevices } from '../hooks/useDevices'
 import { LineChartCard } from '../components/LineChartCard'
 import { PageError, PageLoading } from '../components/PageState'
-import { ApiError } from '../lib/api'
-import { formatRelativeTime } from '../lib/format'
+import { api, ApiError } from '../lib/api'
+import {
+  formatRelativeTime,
+  TELEMETRY_RANGE_OPTIONS,
+  telemetryRefetchInterval,
+} from '../lib/format'
 import { StatusBadge } from '../components/StatusBadge'
+import type { TelemetryRange } from '../lib/types'
 
 export function DeviceDetail() {
   const { id } = useParams<{ id: string }>()
-  const telemetryQuery = useTelemetry(id)
+  const [range, setRange] = useState<TelemetryRange>('1h')
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  const telemetryQuery = useTelemetry(id, {
+    range,
+    refetchInterval: telemetryRefetchInterval(range),
+  })
   const devicesQuery = useDevices()
+
+  const exportMutation = useMutation({
+    mutationFn: () => {
+      if (!id) throw new ApiError('Device tidak ditemukan', 400)
+      return api.exportTelemetry(id, range)
+    },
+    onSuccess: () => {
+      setExportError(null)
+    },
+    onError: (error) => {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'Gagal mengunduh data telemetri.'
+      setExportError(
+        error instanceof ApiError && error.status === 404
+          ? 'Tidak ada data pada rentang waktu ini'
+          : message,
+      )
+    },
+  })
+
+  useEffect(() => {
+    if (!exportError) return
+    const timer = window.setTimeout(() => setExportError(null), 4000)
+    return () => window.clearTimeout(timer)
+  }, [exportError])
 
   const device = devicesQuery.data?.find((item) => item.id === id)
   const points = telemetryQuery.data ?? []
   const latest = points.length > 0 ? points[points.length - 1] : undefined
 
-  if (telemetryQuery.isLoading) {
+  if (telemetryQuery.isLoading && !telemetryQuery.data) {
     return <PageLoading>Memuat telemetri…</PageLoading>
   }
 
-  if (telemetryQuery.isError) {
+  if (telemetryQuery.isError && !telemetryQuery.data) {
     const message =
       telemetryQuery.error instanceof ApiError
         ? telemetryQuery.error.message
         : 'Gagal memuat data telemetri.'
     return <PageError>{message}</PageError>
   }
+
+  const refreshLabel =
+    range === '15m' || range === '1h'
+      ? '10 detik'
+      : range === '24h'
+        ? '60 detik'
+        : '5 menit'
 
   return (
     <div className="space-y-6">
@@ -54,7 +101,7 @@ export function DeviceDetail() {
           ) : null}
         </div>
         <p className="text-sm text-[var(--text-muted)]">
-          Auto-refresh setiap 5 detik
+          Auto-refresh setiap {refreshLabel}
           {telemetryQuery.isFetching && !telemetryQuery.isLoading
             ? ' · memperbarui…'
             : ''}
@@ -70,7 +117,7 @@ export function DeviceDetail() {
             <div>
               <p className="text-sm font-medium text-[var(--text-muted)]">Suhu</p>
               <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--text)]">
-                {latest ? `${latest.data.suhu}°C` : '—'}
+                {latest?.data.suhu != null ? `${latest.data.suhu}°C` : '—'}
               </p>
             </div>
           </div>
@@ -84,14 +131,60 @@ export function DeviceDetail() {
             <div>
               <p className="text-sm font-medium text-[var(--text-muted)]">Kelembapan</p>
               <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--text)]">
-                {latest ? `${latest.data.kelembapan}%` : '—'}
+                {latest?.data.kelembapan != null ? `${latest.data.kelembapan}%` : '—'}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <LineChartCard data={points} />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {TELEMETRY_RANGE_OPTIONS.map((option) => {
+              const active = range === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setRange(option.value)}
+                  className={`rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+                    active
+                      ? 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              onClick={() => exportMutation.mutate()}
+              disabled={exportMutation.isPending || !id}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Download size={16} />
+              {exportMutation.isPending ? 'Mengunduh...' : 'Export Excel'}
+            </button>
+            <p className="text-xs text-[var(--text-muted)]">
+              Mengunduh data mentah sesuai rentang yang dipilih.
+            </p>
+            {exportError ? (
+              <p className="text-xs font-semibold text-[var(--offline)]">{exportError}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <LineChartCard
+          data={points}
+          range={range}
+          emptyMessage="Belum ada data pada rentang waktu ini"
+        />
+      </div>
     </div>
   )
 }

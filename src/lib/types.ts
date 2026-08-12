@@ -51,6 +51,8 @@ export interface TelemetryPoint {
   data: TelemetryData
 }
 
+export type TelemetryRange = '15m' | '1h' | '24h' | '7d'
+
 export type WidgetType = 'chart' | 'gauge' | 'stat' | 'text' | 'button'
 export type WidgetWidth = 'half' | 'full'
 
@@ -59,6 +61,7 @@ export interface WidgetConfig {
   max?: number
   unit?: string
   limit?: number
+  range?: TelemetryRange
   content?: string
   command?: string
 }

@@ -17,6 +17,7 @@ import type {
   SendCommandRequest,
   SendCommandResponse,
   TelemetryPoint,
+  TelemetryRange,
   UpdateWidgetRequest,
   Widget,
 } from './types'
@@ -162,10 +163,77 @@ export const api = {
     })
   },
 
-  getTelemetry(deviceId: string, limit = 50) {
+  getTelemetry(
+    deviceId: string,
+    options: { limit?: number; range?: TelemetryRange } = {},
+  ) {
+    const params = new URLSearchParams()
+    if (options.range) {
+      params.set('range', options.range)
+    } else {
+      params.set('limit', String(options.limit ?? 50))
+    }
+
     return request<TelemetryPoint[]>(
-      `/api/telemetry/${encodeURIComponent(deviceId)}?limit=${limit}`,
+      `/api/telemetry/${encodeURIComponent(deviceId)}?${params.toString()}`,
     )
+  },
+
+  async exportTelemetry(deviceId: string, range: TelemetryRange) {
+    const token = getToken()
+    const headers = new Headers()
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+
+    const response = await fetch(
+      `${API_BASE}/api/telemetry/${encodeURIComponent(deviceId)}/export?range=${encodeURIComponent(range)}`,
+      { headers },
+    )
+
+    if (response.status === 401) {
+      clearToken()
+      const currentPath = window.location.pathname
+      if (
+        currentPath !== '/login' &&
+        currentPath !== '/register' &&
+        currentPath !== '/verify-email'
+      ) {
+        window.location.assign('/login')
+      }
+      throw new ApiError('Unauthorized', 401)
+    }
+
+    if (!response.ok) {
+      let message = `Request failed (${response.status})`
+      try {
+        const body = (await response.json()) as {
+          message?: string
+          error?: string
+        }
+        message = body.message ?? body.error ?? message
+      } catch {
+        // ignore parse errors
+      }
+      throw new ApiError(message, response.status)
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const utfMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition)
+    const plainMatch = /filename="?([^";]+)"?/i.exec(disposition)
+    const filename = decodeURIComponent(
+      utfMatch?.[1] ?? plainMatch?.[1] ?? 'telemetri.xlsx',
+    )
+
+    const objectUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = objectUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(objectUrl)
   },
 
   getAlerts() {

@@ -15,11 +15,13 @@ import { useDeviceMetrics } from '../../hooks/useDeviceMetrics'
 import { api, ApiError } from '../../lib/api'
 import type {
   CreateWidgetRequest,
+  TelemetryRange,
   UpdateWidgetRequest,
   Widget,
   WidgetType,
   WidgetWidth,
 } from '../../lib/types'
+import { TELEMETRY_RANGE_OPTIONS } from '../../lib/format'
 
 const inputClassName =
   'w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)] outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-light)]'
@@ -119,7 +121,8 @@ export function WidgetFormModal({ open, widget, onClose }: WidgetFormModalProps)
   const [min, setMin] = useState('0')
   const [max, setMax] = useState('100')
   const [unit, setUnit] = useState('')
-  const [limit, setLimit] = useState('50')
+  const [chartRange, setChartRange] = useState<TelemetryRange>('1h')
+  const [preservedLimit, setPreservedLimit] = useState<number | undefined>(undefined)
   const [content, setContent] = useState('')
   const [command, setCommand] = useState('')
   const [unitTouched, setUnitTouched] = useState(false)
@@ -146,7 +149,8 @@ export function WidgetFormModal({ open, widget, onClose }: WidgetFormModalProps)
       setMin(String(widget.config.min ?? 0))
       setMax(String(widget.config.max ?? 100))
       setUnit(widget.config.unit ?? '')
-      setLimit(String(widget.config.limit ?? 50))
+      setChartRange(widget.config.range ?? '1h')
+      setPreservedLimit(widget.config.limit)
       setContent(widget.config.content ?? '')
       setCommand(widget.config.command ?? '')
       // Preserve saved values when editing; don't auto-overwrite from metric map
@@ -161,7 +165,8 @@ export function WidgetFormModal({ open, widget, onClose }: WidgetFormModalProps)
       setMin('0')
       setMax('100')
       setUnit('')
-      setLimit('50')
+      setChartRange('1h')
+      setPreservedLimit(undefined)
       setContent('')
       setCommand('')
       setUnitTouched(false)
@@ -204,7 +209,10 @@ export function WidgetFormModal({ open, widget, onClose }: WidgetFormModalProps)
               unit: unit.trim() || undefined,
             }
           : type === 'chart'
-            ? { limit: Number(limit) || 50 }
+            ? {
+                range: chartRange,
+                ...(preservedLimit != null ? { limit: preservedLimit } : {}),
+              }
             : type === 'stat'
               ? { unit: unit.trim() || undefined }
               : type === 'text'
@@ -470,19 +478,22 @@ export function WidgetFormModal({ open, widget, onClose }: WidgetFormModalProps)
 
         {type === 'chart' ? (
           <div>
-            <label htmlFor="widget-limit" className="mb-1.5 block text-sm font-semibold text-[var(--text)]">
-              Jumlah data (limit)
+            <label htmlFor="widget-range" className="mb-1.5 block text-sm font-semibold text-[var(--text)]">
+              Rentang waktu
             </label>
-            <input
-              id="widget-limit"
-              type="number"
-              min={5}
-              max={200}
+            <select
+              id="widget-range"
               required
-              value={limit}
-              onChange={(e) => setLimit(e.target.value)}
+              value={chartRange}
+              onChange={(e) => setChartRange(e.target.value as TelemetryRange)}
               className={inputClassName}
-            />
+            >
+              {TELEMETRY_RANGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
         ) : null}
 

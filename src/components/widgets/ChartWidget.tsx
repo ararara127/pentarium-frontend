@@ -9,7 +9,12 @@ import {
 } from 'recharts'
 import { useTelemetry } from '../../hooks/useTelemetry'
 import { ApiError } from '../../lib/api'
-import { formatChartTime } from '../../lib/format'
+import {
+  formatChartTime,
+  formatChartTimeForRange,
+  telemetryRangeLabel,
+  telemetryRefetchInterval,
+} from '../../lib/format'
 import type { Widget } from '../../lib/types'
 import { WidgetShell } from './WidgetShell'
 
@@ -18,28 +23,36 @@ interface ChartWidgetProps {
 }
 
 export function ChartWidget({ widget }: ChartWidgetProps) {
+  const range = widget.config.range
   const limit = widget.config.limit ?? 50
   const metric = widget.metric ?? ''
   const deviceId = widget.deviceId ?? undefined
 
   const { data, isLoading, isError, error } = useTelemetry(deviceId, {
-    limit,
-    refetchInterval: 10_000,
+    ...(range ? { range } : { limit }),
+    refetchInterval: range ? telemetryRefetchInterval(range) : 10_000,
     enabled: Boolean(deviceId && metric),
   })
 
   const chartData =
     data?.map((point) => ({
-      time: formatChartTime(point.ts),
+      time: range
+        ? formatChartTimeForRange(point.ts, range)
+        : formatChartTime(point.ts),
       value: point.data[metric],
     })) ?? []
 
   const hasValues = chartData.some((d) => typeof d.value === 'number')
 
+  const subtitleParts = [
+    widget.device?.name,
+    range ? telemetryRangeLabel(range) : null,
+  ].filter(Boolean)
+
   return (
     <WidgetShell
       title={widget.title}
-      subtitle={widget.device?.name ?? undefined}
+      subtitle={subtitleParts.length > 0 ? subtitleParts.join(' · ') : undefined}
       isLoading={isLoading}
       error={
         isError
@@ -50,7 +63,13 @@ export function ChartWidget({ widget }: ChartWidgetProps) {
             ? 'Widget belum dikonfigurasi'
             : null
       }
-      empty={!isLoading && !isError && !hasValues ? 'Belum ada data' : null}
+      empty={
+        !isLoading && !isError && !hasValues
+          ? range
+            ? 'Belum ada data pada rentang waktu ini'
+            : 'Belum ada data'
+          : null
+      }
     >
       <div className="h-52 w-full">
         <ResponsiveContainer width="100%" height="100%">
