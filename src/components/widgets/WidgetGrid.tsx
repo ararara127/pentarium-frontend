@@ -58,14 +58,14 @@ export function WidgetGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
       {widgets.map((widget, index) => (
         <div
           key={widget.id}
-          className={`relative ${widget.width === 'full' ? 'md:col-span-2' : 'md:col-span-1'}`}
+          className={`relative min-w-0 ${widget.width === 'full' ? 'md:col-span-2' : 'md:col-span-1'}`}
         >
           {editMode ? (
-            <div className="absolute right-3 top-3 z-10 flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-[var(--shadow)]">
+            <div className="absolute right-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-[var(--shadow)] md:right-3 md:top-3">
               <button
                 type="button"
                 title="Pindah atas"

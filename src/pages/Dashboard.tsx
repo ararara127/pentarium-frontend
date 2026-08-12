@@ -79,18 +79,18 @@ export function Dashboard() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="min-w-0 space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-[var(--text-muted)]">
           Auto-refresh setiap 10 detik
           {isFetching && !isLoading ? ' · memperbarui…' : ''}
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           {editMode ? (
             <button
               type="button"
               onClick={() => setEditMode(false)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)]"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--bg)] sm:w-auto"
             >
               <Check size={16} className="text-[var(--online)]" />
               Selesai
@@ -99,7 +99,7 @@ export function Dashboard() {
             <button
               type="button"
               onClick={() => setEditMode(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--brand-light)] hover:text-[var(--brand)]"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--brand-light)] hover:text-[var(--brand)] sm:w-auto"
             >
               <LayoutGrid size={16} />
               Kelola Widget
@@ -111,7 +111,7 @@ export function Dashboard() {
               setEditingWidget(null)
               setFormOpen(true)
             }}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-3.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)] sm:w-auto"
           >
             <Plus size={16} />
             Tambah Widget
@@ -119,7 +119,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
         <KPICard title="Total Devices" value={data.totalDevices} tone="default" />
         <KPICard title="Online" value={data.online} tone="online" />
         <KPICard title="Offline" value={data.offline} tone="offline" />

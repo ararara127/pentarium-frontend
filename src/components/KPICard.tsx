@@ -36,16 +36,16 @@ export function KPICard({ title, value, tone = 'default', icon }: KPICardProps) 
   const Icon = icon ?? defaultIcons[tone]
 
   return (
-    <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+    <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow)] md:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-[var(--text-muted)]">{title}</p>
           <p className={`mt-2 text-3xl font-extrabold tracking-tight ${styles.valueColor}`}>
             {value}
           </p>
         </div>
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl ${styles.iconBg} ${styles.iconColor}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.iconBg} ${styles.iconColor}`}
         >
           <Icon size={20} strokeWidth={2} />
         </div>

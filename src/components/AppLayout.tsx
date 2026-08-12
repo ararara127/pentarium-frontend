@@ -30,15 +30,25 @@ function resolveTitle(pathname: string): { title: string; subtitle?: string } {
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const { title, subtitle } = resolveTitle(location.pathname)
 
   return (
-    <div className="flex min-h-svh bg-[var(--bg)]">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((prev) => !prev)} />
+    <div className="flex min-h-svh overflow-x-hidden bg-[var(--bg)]">
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((prev) => !prev)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title={title} subtitle={subtitle} />
-        <main className="flex-1 p-6">
+        <Topbar
+          title={title}
+          subtitle={subtitle}
+          onMenuClick={() => setMobileOpen(true)}
+        />
+        <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-4 md:p-6">
           <Outlet />
         </main>
       </div>
